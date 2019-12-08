@@ -1,2 +1,2 @@
-./config/config.toml
-./vendor/*
+config/config.toml
+vendor/*
