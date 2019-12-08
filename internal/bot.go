@@ -4,6 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func InitBot(config *Config) (err error) {
@@ -18,6 +21,19 @@ func InitBot(config *Config) (err error) {
 
 	discord.AddHandler(messageCreate)
 
+	err = discord.Open()
+	if err != nil {
+		fmt.Println("Error opening connection,", err)
+		err = errors.New("Error starting bot: " + err.Error())
+		return err
+	}
+
+	fmt.Println("Bot is now running.")
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	<-sc
+
+	discord.Close()
 	return nil
 }
 
@@ -26,8 +42,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if m.Content == "ping" {
-		s.ChannelMessageSend(m.ChannelID, "Pong!")
+	if m.Content == ":)" {
+		s.ChannelMessageSend(m.ChannelID, ":(")
 	}
 
 }
