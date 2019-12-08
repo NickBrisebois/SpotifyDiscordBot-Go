@@ -10,7 +10,6 @@ import (
 )
 
 func InitBot(config *Config) (err error) {
-	fmt.Printf("Discord Token: %s", config.DiscordToken)
 	discord, err := discordgo.New("Bot " + config.DiscordToken)
 
 	if err != nil {

@@ -1,1 +1,4 @@
-discordToken = "discord token"
+discordToken        = "discord token"
+spotifyRedirectURL  = "http://spotify.com/example"
+spotifyClientID     = "client id"
+spotifySecretKey    = "secret key"

@@ -27,4 +27,5 @@ deps:
 	$(GOGET) init
 	$(GOGET) github.com/BurntSushi/toml
 	$(GOGET) github.com/bwmarrin/discordgo
+	$(GOGET) github.com/zmb3/spotify
 
