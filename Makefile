@@ -23,6 +23,8 @@ run:
 	./build/$(BINARY_NAME)
 
 deps:
-	$(GOGET) github.com/BurnSushi/toml
+	go get -u github.com/kardianos/govendor
+	$(GOGET) init
+	$(GOGET) github.com/BurntSushi/toml
 	$(GOGET) github.com/bwmarrin/discordgo
 
