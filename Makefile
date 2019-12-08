@@ -2,15 +2,15 @@ GOCMD=go
 GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
-GOGET=$(GOCMD) get
-BINARY_NAME=goproj
+GOGET=govendor fetch
+BINARY_NAME=spoticord
 
 all: build
 build:
-	rm -rf ./build/
-	mkdir ./build
-	cp -r ./src/config/* ./build/
-	$(GOBUILD) -o ./build/$(BINARY_NAME) -v ./cmd/ ./internal/ 
+	rm -rf ./build/;
+	mkdir ./build;
+	cp -r ./config/* ./build/
+	$(GOBUILD) -o ./build/$(BINARY_NAME) -v
 
 test:
 	$(GTEST) -v ./...
@@ -24,4 +24,5 @@ run:
 
 deps:
 	$(GOGET) github.com/BurnSushi/toml
+	$(GOGET) github.com/bwmarrin/discordgo
 
