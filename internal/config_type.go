@@ -1,5 +1,8 @@
 package internal
 
 type Config struct {
-	DiscordToken string
+	DiscordToken       string
+	SpotifyRedirectURL string
+	SpotifyClientID    string
+	SpotifySecretKey   string
 }

@@ -3,7 +3,7 @@ GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=govendor fetch
-BINARY_NAME=spoticord
+BINARY_NAME=spottybot
 
 all: build
 build:
@@ -28,4 +28,5 @@ deps:
 	$(GOGET) github.com/BurntSushi/toml
 	$(GOGET) github.com/bwmarrin/discordgo
 	$(GOGET) github.com/zmb3/spotify
+	$(GOGET) golang.org/x/oauth2/clientcredentials
 

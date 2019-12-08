@@ -20,6 +20,8 @@ func InitBot(config *Config) (err error) {
 
 	discord.AddHandler(messageCreate)
 
+	go InitSpotify(config)
+
 	err = discord.Open()
 	if err != nil {
 		fmt.Println("Error opening connection,", err)
