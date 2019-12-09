@@ -3,6 +3,7 @@ GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=govendor fetch
+VENDORINIT=govendor init
 BINARY_NAME=spottybot
 
 all: build
@@ -24,7 +25,7 @@ run:
 
 deps:
 	go get -u github.com/kardianos/govendor
-	$(GOGET) init
+	$(VENDORINIT)
 	$(GOGET) github.com/BurntSushi/toml
 	$(GOGET) github.com/bwmarrin/discordgo
 	$(GOGET) github.com/zmb3/spotify
