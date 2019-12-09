@@ -17,12 +17,11 @@ var (
 	state = "abc123"
 )
 
+// InitSpotify starts spotify API handler
 func InitSpotify(config *Config) (err error) {
-	//	startAuthServer(config)
-
 	spotifyConfig := &clientcredentials.Config{
 		ClientID:     config.SpotifyClientID,
-		ClientSecret: config.SpotifySecretKey,
+		ClientSecret: config.SpotifyClientSecret,
 		TokenURL:     spotify.TokenURL,
 	}
 
@@ -31,10 +30,7 @@ func InitSpotify(config *Config) (err error) {
 		log.Fatalf("couldn't get token: %v", err)
 	}
 
-	auth := spotify.NewAuthenticator(config.SpotifyRedirectURL, spotify.ScopeUserReadPrivate)
-	auth.SetAuthInfo(config.SpotifyClientID, config.SpotifySecretKey)
-
-	client := auth.NewClient(token)
+	client := spotify.Authenticator{}.NewClient(token)
 
 	const PlaylistID spotify.ID = "37i9dQZF1EthtctLd3ak1i"
 	results, err := client.GetPlaylist(PlaylistID)
@@ -51,44 +47,3 @@ func InitSpotify(config *Config) (err error) {
 
 	return nil
 }
-
-/*
-func startAuthServer(config *Config) {
-	http.HandleFunc("/callback", completeAuth)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Got request for:", r.URL.String())
-	})
-
-	go http.ListenAndServe(":8080", nil)
-
-	fmt.Println(config)
-	auth = spotify.NewAuthenticator(config.SpotifyRedirectURL, spotify.ScopeUserReadPrivate)
-	url := auth.AuthURL(state)
-	fmt.Println("Please login to Spotiify by visiting the following page in your browser: ", url)
-
-	client := <-ch
-
-	user, err := client.CurrentUser()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Logged in as: ", user.ID)
-}
-
-func completeAuth(w http.ResponseWriter, r *http.Request) {
-	tok, err := auth.Token(state, r)
-	if err != nil {
-		log.Println(w, "Couldn't get token", http.StatusForbidden)
-		log.Fatal(err)
-	}
-	if st := r.FormValue("state"); st != state {
-		http.NotFound(w, r)
-		log.Fatalf("State mismatch: %s != %s", st, state)
-	}
-
-	client := auth.NewClient(tok)
-	fmt.Fprintf(w, "Login Completed!")
-	ch <- &client
-}
-*/
