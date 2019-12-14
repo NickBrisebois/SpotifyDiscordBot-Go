@@ -4,13 +4,24 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/mvdan/xurls"
+	"log"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
+var (
+	spottyConf *Config
+	spottyChan chan string
+)
+
+// InitBot initializes the discord bot portion of spottybot
 func InitBot(config *Config) (err error) {
-	discord, err := discordgo.New("Bot " + config.DiscordToken)
+	spottyConf = config
+
+	discord, err := discordgo.New("Bot " + spottyConf.DiscordToken)
 
 	if err != nil {
 		fmt.Println("error creating Discord session, ", err)
@@ -18,9 +29,12 @@ func InitBot(config *Config) (err error) {
 		return err
 	}
 
-	discord.AddHandler(messageCreate)
+	spottyChan = make(chan string)
 
-	go InitSpotify(config)
+	// Start spotify API handler
+	go InitSpotify(config, spottyChan)
+
+	discord.AddHandler(messageCreate)
 
 	err = discord.Open()
 	if err != nil {
@@ -30,21 +44,48 @@ func InitBot(config *Config) (err error) {
 	}
 
 	fmt.Println("Bot is now running.")
+
+	// Make sure program is killable with signals
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
+
+	// If we got here, we received a quit signal so let the spotify thread know that
+	spottyChan <- "quit"
 
 	discord.Close()
 	return nil
 }
 
+// messageCreate handles when a message has been sent and should be responded to
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	// Skip messages by the bot
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
 
-	if m.Content == ":)" {
-		s.ChannelMessageSend(m.ChannelID, ":(")
+	spottyChan <- "TESTING CHANNEL"
+
+	if spottyConf.LimitToOneChannel == false || m.ChannelID == spottyConf.ChannelToUse {
+		//		s.ChannelMessageSend(m.ChannelID, m.Content)
+		urlExtractor := xurls.Relaxed()
+		extracted := urlExtractor.FindAllString(m.Content, -1)
+
+		for _, u := range extracted {
+			m, err := url.Parse(u)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// Make sure the URL we're checking is a spotify URL
+			if m.Host == "open.spotify.com" {
+				// Grab the ID and ignore the /track/ portion
+				var trackPath, ID string
+				fmt.Sscanf(m.Path, "%7s%s", &trackPath, &ID)
+				fmt.Println(ID)
+			}
+		}
 	}
 
 }

@@ -6,4 +6,7 @@ type Config struct {
 	SpotifyRedirectURL  string
 	SpotifyClientID     string
 	SpotifyClientSecret string
+	LimitToOneChannel   bool
+	ChannelToUse        string
+	SpotifyPlaylist     string
 }

@@ -1,4 +1,9 @@
+# API SETTINGS
 discordToken        = "discord token"
 spotifyRedirectURL  = "http://spotify.com/example"
 spotifyClientID     = "client id"
 spotifySecretKey    = "secret key"
+
+# BOT SETTINGS
+limitToOneChannel   = true
+channelToUse        = "channel ID"
