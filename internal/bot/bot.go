@@ -1,8 +1,10 @@
-package internal
+package bot
 
 import (
 	"errors"
 	"fmt"
+	"github.com/NickBrisebois/SpotifyDiscordBot-Go/internal/config"
+	"github.com/NickBrisebois/SpotifyDiscordBot-Go/internal/spotifyauth"
 	"github.com/bwmarrin/discordgo"
 	"github.com/mvdan/xurls"
 	"log"
@@ -13,12 +15,12 @@ import (
 )
 
 var (
-	spottyConf *Config
+	spottyConf *config.Config
 	spottyChan chan string
 )
 
 // InitBot initializes the discord bot portion of spottybot
-func InitBot(config *Config) (err error) {
+func InitBot(config *config.Config) (err error) {
 	spottyConf = config
 
 	discord, err := discordgo.New("Bot " + spottyConf.DiscordToken)
@@ -32,7 +34,8 @@ func InitBot(config *Config) (err error) {
 	spottyChan = make(chan string)
 
 	// Start spotify API handler
-	go InitSpotify(config, spottyChan)
+	client := spotifyauth.GetSpotifyClient(spottyConf)
+	go InitSpotify(config, spottyChan, client)
 
 	discord.AddHandler(messageCreate)
 
@@ -43,12 +46,12 @@ func InitBot(config *Config) (err error) {
 		return err
 	}
 
-	fmt.Println("Bot is now running.")
-
 	// Make sure program is killable with signals
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
+
+	fmt.Println("Bot is now running.")
 
 	// If we got here, we received a quit signal so let the spotify thread know that
 	spottyChan <- "quit"
@@ -63,8 +66,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-
-	spottyChan <- "TESTING CHANNEL"
 
 	if spottyConf.LimitToOneChannel == false || m.ChannelID == spottyConf.ChannelToUse {
 		//		s.ChannelMessageSend(m.ChannelID, m.Content)
@@ -83,7 +84,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				// Grab the ID and ignore the /track/ portion
 				var trackPath, ID string
 				fmt.Sscanf(m.Path, "%7s%s", &trackPath, &ID)
-				fmt.Println(ID)
+				spottyChan <- ID
 			}
 		}
 	}

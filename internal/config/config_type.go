@@ -1,4 +1,4 @@
-package internal
+package config
 
 // Config holds spotify and discord configuration data
 type Config struct {
