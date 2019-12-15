@@ -34,14 +34,15 @@ func InitSpotify(config *config.Config, spottyChan chan string, client *spotify.
 
 	// We will loop every time we get some IDs or the exit command from the spotty channel
 	for {
-		data := <-spottyChan
+		songid := <-spottyChan
 
-		if data == "quit" {
+		if songid == "quit" {
 			break
 		} else {
-			if songdb.isUnique(data) {
+			if songdb.isUnique(songid) {
 				log.Println("Adding song to playlist")
-				_, err := client.AddTracksToPlaylist(playlistID, spotify.ID(data))
+				_, err := client.AddTracksToPlaylist(playlistID, spotify.ID(songid))
+				songdb.addNewSong(songid)
 				if err != nil {
 					log.Println(err)
 				} else {
@@ -123,10 +124,13 @@ func (db *database) isUnique(songid string) bool {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
+			// This is the error we were hoping for, no documents exist of this song
 			return true
 		}
 	}
 
 	log.Println("Song already exists in database")
+
 	return false
+
 }

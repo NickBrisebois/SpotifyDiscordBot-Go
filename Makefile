@@ -8,6 +8,7 @@ GOTEST=$(GOCMD) test
 GOGET=govendor fetch
 VENDORINIT=govendor init
 BINARY_NAME=spottybot
+VERSION=$(shell cat ./VERSION)
 
 LDFLAGS=-ldflags "-X=main.Version=$(VESRION) -X=main.Build=$(BUILD)"
 
@@ -18,7 +19,6 @@ build:
 	rm -rf ./build/;
 	mkdir ./build;
 	cp -r ./config/config.toml ./build/
-#	$(GOBUILD) -o ./build/$(BINARY_NAME) -v
 	$(MAKE) -s go-build
 
 test:
@@ -33,6 +33,9 @@ go-build:
 
 run:
 	./build/$(BINARY_NAME) --config ./build/config.toml
+
+build-docker:
+	docker build -t $(BINARY_NAME)-$(VERSION) .
 
 deps:
 	go get -u github.com/kardianos/govendor

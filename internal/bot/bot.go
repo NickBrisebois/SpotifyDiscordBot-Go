@@ -17,6 +17,7 @@ import (
 var (
 	spottyConf *config.Config
 	spottyChan chan string
+	spottyResp string
 )
 
 // InitBot initializes the discord bot portion of spottybot
@@ -73,20 +74,26 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		extracted := urlExtractor.FindAllString(m.Content, -1)
 
 		for _, u := range extracted {
-			m, err := url.Parse(u)
+			u, err := url.Parse(u)
 
 			if err != nil {
 				log.Fatal(err)
 			}
 
 			// Make sure the URL we're checking is a spotify URL
-			if m.Host == "open.spotify.com" {
+			if u.Host == "open.spotify.com" {
 				// Grab the ID and ignore the /track/ portion
 				var trackPath, ID string
-				fmt.Sscanf(m.Path, "%7s%s", &trackPath, &ID)
+				fmt.Sscanf(u.Path, "%7s%s", &trackPath, &ID)
 
-				// Send the spotify ID to the spotify API handling thread
-				spottyChan <- ID
+				if trackPath == "/track/" {
+					// Send the spotify ID to the spotify API handling thread
+					spottyChan <- ID
+					// Wait for reply
+					spottyResp = <-spottyChan
+
+					s.ChannelMessageSend(m.ChannelID, spottyResp)
+				}
 			}
 		}
 	}
