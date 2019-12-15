@@ -26,7 +26,7 @@ func InitBot(config *config.Config) (err error) {
 	discord, err := discordgo.New("Bot " + spottyConf.DiscordToken)
 
 	if err != nil {
-		fmt.Println("error creating Discord session, ", err)
+		log.Println("error creating Discord session, ", err)
 		err = errors.New("Error initializing bot: " + err.Error())
 		return err
 	}
@@ -41,17 +41,17 @@ func InitBot(config *config.Config) (err error) {
 
 	err = discord.Open()
 	if err != nil {
-		fmt.Println("Error opening connection,", err)
+		log.Println("Error opening connection,", err)
 		err = errors.New("Error starting bot: " + err.Error())
 		return err
 	}
+
+	log.Println("Bot is now running.")
 
 	// Make sure program is killable with signals
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
-
-	fmt.Println("Bot is now running.")
 
 	// If we got here, we received a quit signal so let the spotify thread know that
 	spottyChan <- "quit"
@@ -84,6 +84,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				// Grab the ID and ignore the /track/ portion
 				var trackPath, ID string
 				fmt.Sscanf(m.Path, "%7s%s", &trackPath, &ID)
+
+				// Send the spotify ID to the spotify API handling thread
 				spottyChan <- ID
 			}
 		}

@@ -44,7 +44,7 @@ func GetSpotifyClient(spottyConf *config.Config) *spotify.Client {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("You are logged in as:", user.ID)
+	log.Println("You are logged in as:", user.ID)
 
 	return client
 }
@@ -63,4 +63,6 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 	client := authenticator.NewClient(tok)
 	fmt.Fprintf(w, "Login Completed!")
 	ch <- &client
+
+	return
 }

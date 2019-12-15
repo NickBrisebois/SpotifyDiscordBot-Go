@@ -9,4 +9,7 @@ type Config struct {
 	LimitToOneChannel   bool
 	ChannelToUse        string
 	SpotifyPlaylist     string
+	MongoURI            string
+	MongoDatabase       string
+	MongoCollection     string
 }

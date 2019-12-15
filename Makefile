@@ -42,4 +42,7 @@ deps:
 	$(GOGET) github.com/zmb3/spotify
 	$(GOGET) golang.org/x/oauth2/clientcredentials
 	$(GOGET) github.com/mvdan/xurls
+	$(GOGET) go.mongodb.org/mongo-driver/mongo
+	$(GOGET) go.mongodb.org/mongo-driver/bson
+	$(GOGET) go.mongodb.org/mongo-driver/mongo/options
 

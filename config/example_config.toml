@@ -1,9 +1,17 @@
 # API SETTINGS
 discordToken        = "discord token"
-spotifyRedirectURL  = "http://spotify.com/example"
 spotifyClientID     = "client id"
-spotifySecretKey    = "secret key"
+spotifyClientSecret = "secret key"
+spotifyRedirectURL  = "http://localhost:8080/callback"
 
 # BOT SETTINGS
 limitToOneChannel   = true
 channelToUse        = "channel ID"
+
+# SPOTIFY PLAYLIST TO ADD TO
+spotifyPlaylist      = "playlist id to add to"
+
+# MongoDB storage of added songs
+mongoURI             = "mongodb://localhost:27017"
+mongoDatabase        = "SpottyBot"
+mongoCollection      = "AddedSongs"
