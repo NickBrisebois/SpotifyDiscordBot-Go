@@ -17,7 +17,6 @@ RUN set -eux; \
 		musl-dev \
 		openssl \
 		go \
-        mongodb \
 	; \
 	export \
 # set GOROOT_BOOTSTRAP such that we can actually build Go
@@ -60,10 +59,11 @@ RUN set -eux; \
 ENV GOPATH /go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
-RUN mkdir -p "$GOPATH/src/github.com/NickBrisebois/" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
-COPY . $GOPATH/src/github.com/NickBrisebois/
-RUN cd $GOPATH/src/github.com/NickBrisebois/
-RUN make deps
-RUN make build
+RUN mkdir -p "$GOPATH/src/github.com/NickBrisebois/SpotifyDiscordBot-Go" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+COPY . $GOPATH/src/github.com/NickBrisebois/SpotifyDiscordBot-Go
+RUN cd $GOPATH/src/github.com/NickBrisebois/SpotifyDiscordBot-Go \
+    make deps \
+    make build \
 
 WORKDIR $GOPATH
+CMD cd $GOPATH/src/github.com/NickBrisebois/SpotifyDiscordBot-Go && make run
