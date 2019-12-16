@@ -1,0 +1,20 @@
+version: '3'
+services:
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    networks:
+      - default
+  spottybot:
+    container_name: spottybot
+    image: spottybot:1.0
+    restart: always
+    depends_on:
+      - mongo
+    links:
+      - mongodb:mongo
+    networks:
+      - default
