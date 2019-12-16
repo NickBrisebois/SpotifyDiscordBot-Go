@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 services:
   mongo:
     image: mongo
@@ -10,13 +10,17 @@ services:
       - default
   spottybot:
     container_name: spottybot
-    image: spottybot:1.0
+    image: spottybot-1.0
     restart: always
     depends_on:
       - mongo
     links:
       - mongo:mongodb
     networks:
-      - default
+      - dockernet
     ports:
-      "8080":"8080"
+        - "127.0.0.1:8080:8080"
+
+networks:
+    dockernet:
+        external: true

@@ -59,13 +59,15 @@ RUN set -eux; \
 ENV GOPATH /go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
-RUN apk add gcc libc-dev git
+RUN apk add gcc libc-dev git make
 
 RUN mkdir -p "$GOPATH/src/github.com/NickBrisebois/SpotifyDiscordBot-Go" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 COPY . $GOPATH/src/github.com/NickBrisebois/SpotifyDiscordBot-Go
-RUN cd $GOPATH/src/github.com/NickBrisebois/SpotifyDiscordBot-Go \
-    make deps \
-    make build \
+RUN cd $GOPATH/src/github.com/NickBrisebois/SpotifyDiscordBot-Go && \
+    make deps && \
+    make build
 
-WORKDIR $GOPATH
-CMD cd $GOPATH/src/github.com/NickBrisebois/SpotifyDiscordBot-Go && make run
+EXPOSE 8080
+
+WORKDIR $GOPATH/src/github.com/NickBrisebois/SpotifyDiscordBot-Go/
+CMD make run
