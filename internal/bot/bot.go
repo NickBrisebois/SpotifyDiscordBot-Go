@@ -70,34 +70,39 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if spottyConf.LimitToOneChannel == false || m.ChannelID == spottyConf.ChannelToUse {
 		//		s.ChannelMessageSend(m.ChannelID, m.Content)
-		urlExtractor := xurls.Relaxed()
-		extracted := urlExtractor.FindAllString(m.Content, -1)
+		if m.Content == "!playlist" {
+			link := "https://open.spotify.com/playlist/" + spottyConf.SpotifyPlaylist
+			s.ChannelMessageSend(m.ChannelID, link)
+		} else {
+			urlExtractor := xurls.Relaxed()
+			extracted := urlExtractor.FindAllString(m.Content, -1)
 
-		for _, u := range extracted {
-			u, err := url.Parse(u)
+			for _, u := range extracted {
+				u, err := url.Parse(u)
 
-			if err != nil {
-				log.Fatal(err)
-			}
+				if err != nil {
+					log.Fatal(err)
+				}
 
-			// Make sure the URL we're checking is a spotify URL
-			if u.Host == "open.spotify.com" {
-				// Grab the ID and ignore the /track/ portion
-				var trackPath, ID string
-				fmt.Sscanf(u.Path, "%7s%s", &trackPath, &ID)
+				// Make sure the URL we're checking is a spotify URL
+				if u.Host == "open.spotify.com" {
+					// Grab the ID and ignore the /track/ portion
+					var trackPath, ID string
+					fmt.Sscanf(u.Path, "%7s%s", &trackPath, &ID)
 
-				if trackPath == "/track/" {
-					// Send the spotify ID to the spotify API handling thread
-					spottyChan <- ID
-					// Wait for reply
-					spottyResp = <-spottyChan
+					if trackPath == "/track/" {
+						// Send the spotify ID to the spotify API handling thread
+						spottyChan <- ID
+						// Wait for reply
+						spottyResp = <-spottyChan
 
-					if spottyResp != "error" {
-						s.ChannelMessageSend(m.ChannelID, spottyResp)
-					} else {
-						var errorMessage string
-						errorMessage = ID + " - what is this? You think you can trick me into reading this? Bah, I have outsmarted yee"
-						s.ChannelMessageSend(m.ChannelID, errorMessage)
+						if spottyResp != "error" {
+							s.ChannelMessageSend(m.ChannelID, spottyResp)
+						} else {
+							var errorMessage string
+							errorMessage = ID + " - what is this? You think you can trick me into reading this? Bah, I have outsmarted yee"
+							s.ChannelMessageSend(m.ChannelID, errorMessage)
+						}
 					}
 				}
 			}
