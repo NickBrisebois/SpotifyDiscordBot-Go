@@ -92,7 +92,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 					// Wait for reply
 					spottyResp = <-spottyChan
 
-					s.ChannelMessageSend(m.ChannelID, spottyResp)
+					if spottyResp != "error" {
+						s.ChannelMessageSend(m.ChannelID, spottyResp)
+					} else {
+						s.ChannelMessageSend(m.ChannelID, "You tricked me into reading this spotify link, but alas, I have outsmarted yee")
+					}
 				}
 			}
 		}
