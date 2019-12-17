@@ -42,11 +42,11 @@ func InitSpotify(config *config.Config, spottyChan chan string, client *spotify.
 			if songdb.isUnique(songid) {
 				log.Println("Adding song to playlist")
 				_, err := client.AddTracksToPlaylist(playlistID, spotify.ID(songid))
-				songdb.addNewSong(songid)
 				if err != nil {
 					log.Println(err)
 					spottyChan <- "error"
 				} else {
+					songdb.addNewSong(songid)
 					spottyChan <- "I've added the song to the channel playlist!"
 				}
 			} else {
