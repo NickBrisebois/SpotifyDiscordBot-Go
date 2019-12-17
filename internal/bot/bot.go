@@ -95,7 +95,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 					if spottyResp != "error" {
 						s.ChannelMessageSend(m.ChannelID, spottyResp)
 					} else {
-						s.ChannelMessageSend(m.ChannelID, "You tricked me into reading this spotify link, but alas, I have outsmarted yee")
+						var errorMessage string
+						errorMessage = ID + " - what is this? You think you can trick me into reading this? Bah, I have outsmarted yee"
+						s.ChannelMessageSend(m.ChannelID, errorMessage)
 					}
 				}
 			}
