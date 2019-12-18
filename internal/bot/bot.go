@@ -91,22 +91,31 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 					fmt.Sscanf(u.Path, "%7s%s", &trackPath, &ID)
 
 					if trackPath == "/track/" {
-						// Send the spotify ID to the spotify API handling thread
-						spottyChan <- ID
-						// Wait for reply
-						spottyResp = <-spottyChan
-
-						if spottyResp != "error" {
-							s.ChannelMessageSend(m.ChannelID, spottyResp)
-						} else {
-							var errorMessage string
-							errorMessage = ID + " - what is this? You think you can trick me into reading this? Bah, I have outsmarted yee"
-							s.ChannelMessageSend(m.ChannelID, errorMessage)
-						}
+						response := handleTrack(ID)
+						s.ChannelMessageSend(m.ChannelID, response)
+					} else if trackPath == "/album/" {
+						s.ChannelMessageSend(m.ChannelID, "TODO")
+					} else if trackPath == "/playlist" {
+						s.ChannelMessageSend(m.ChannelID, "ALSO TODO")
 					}
+
 				}
 			}
 		}
 	}
+}
 
+func handleTrack(ID string) (response string) {
+	// Send the spotify ID to the spotify API handling thread
+	spottyChan <- ID
+	// Wait for reply
+	spottyResp = <-spottyChan
+
+	if spottyResp == "error" {
+		var errorMessage string
+		errorMessage = ID + " - what is this? You think you can trick me into reading this? Bah, I have outsmarted yee"
+		return errorMessage
+	}
+
+	return spottyResp
 }
