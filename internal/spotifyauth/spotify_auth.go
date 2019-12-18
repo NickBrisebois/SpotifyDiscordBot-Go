@@ -2,7 +2,7 @@ package spotifyauth
 
 import (
 	"fmt"
-	"github.com/NickBrisebois/SpotifyDiscordBot-Go/internal/config"
+	"github.com/NickBrisebois/SpotifyDiscordBot-Go/internal/types"
 	"github.com/zmb3/spotify"
 	"log"
 	"net/http"
@@ -11,11 +11,11 @@ import (
 var (
 	authenticator spotify.Authenticator
 	ch            = make(chan *spotify.Client)
-	state         = "asdfasdfasdfasdfasdfasdfa"
+	state         = "asdfasdfasdfasdfasdfasdfa" // TODO: randomize this on startup
 )
 
 // GetSpotifyClient handles authentication and returns a spotify client
-func GetSpotifyClient(spottyConf *config.Config) *spotify.Client {
+func GetSpotifyClient(spottyConf *types.Config) *spotify.Client {
 	spottyScopes := []string{
 		spotify.ScopePlaylistModifyPrivate,
 		spotify.ScopePlaylistModifyPublic,

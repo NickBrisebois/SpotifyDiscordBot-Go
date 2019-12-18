@@ -1,4 +1,4 @@
-package config
+package types
 
 // Config holds spotify and discord configuration data
 type Config struct {

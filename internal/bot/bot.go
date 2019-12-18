@@ -3,8 +3,8 @@ package bot
 import (
 	"errors"
 	"fmt"
-	"github.com/NickBrisebois/SpotifyDiscordBot-Go/internal/config"
 	"github.com/NickBrisebois/SpotifyDiscordBot-Go/internal/spotifyauth"
+	"github.com/NickBrisebois/SpotifyDiscordBot-Go/internal/types"
 	"github.com/bwmarrin/discordgo"
 	"github.com/mvdan/xurls"
 	"log"
@@ -15,13 +15,13 @@ import (
 )
 
 var (
-	spottyConf *config.Config
-	spottyChan chan string
+	spottyConf *types.Config
+	spottyChan chan types.SpottyMessage
 	spottyResp string
 )
 
 // InitBot initializes the discord bot portion of spottybot
-func InitBot(config *config.Config) (err error) {
+func InitBot(config *types.Config) (err error) {
 	spottyConf = config
 
 	discord, err := discordgo.New("Bot " + spottyConf.DiscordToken)
@@ -32,7 +32,7 @@ func InitBot(config *config.Config) (err error) {
 		return err
 	}
 
-	spottyChan = make(chan string)
+	spottyChan = make(chan types.SpottyMessage)
 
 	// Start spotify API handler
 	client := spotifyauth.GetSpotifyClient(spottyConf)
@@ -55,7 +55,10 @@ func InitBot(config *config.Config) (err error) {
 	<-sc
 
 	// If we got here, we received a quit signal so let the spotify thread know that
-	spottyChan <- "quit"
+	spottyMsg := types.SpottyMessage{
+		Msg: "quit",
+	}
+	spottyChan <- spottyMsg
 
 	discord.Close()
 	return nil
@@ -94,11 +97,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 						response := handleTrack(ID)
 						s.ChannelMessageSend(m.ChannelID, response)
 					} else if trackPath == "/album/" {
-						s.ChannelMessageSend(m.ChannelID, "TODO")
+						s.ChannelMessageSend(m.ChannelID, "Should adding albums even be a feature?")
 					} else if trackPath == "/playlist" {
-						s.ChannelMessageSend(m.ChannelID, "ALSO TODO")
+						s.ChannelMessageSend(m.ChannelID, "Should adding playlists even be a feature?")
 					}
-
 				}
 			}
 		}
@@ -107,15 +109,19 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func handleTrack(ID string) (response string) {
 	// Send the spotify ID to the spotify API handling thread
-	spottyChan <- ID
+	spottyMsg := types.SpottyMessage{
+		Kind: types.Track,
+		ID:   ID,
+	}
+	spottyChan <- spottyMsg
 	// Wait for reply
-	spottyResp = <-spottyChan
+	spottyResp := <-spottyChan
 
-	if spottyResp == "error" {
+	if spottyResp.Err != nil {
 		var errorMessage string
-		errorMessage = ID + " - what is this? You think you can trick me into reading this? Bah, I have outsmarted yee"
+		errorMessage = "Look what you made me do: " + spottyResp.Err.Error()
 		return errorMessage
 	}
 
-	return spottyResp
+	return spottyResp.Msg
 }

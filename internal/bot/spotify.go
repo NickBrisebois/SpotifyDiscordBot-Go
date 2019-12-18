@@ -2,7 +2,7 @@ package bot
 
 import (
 	"context"
-	"github.com/NickBrisebois/SpotifyDiscordBot-Go/internal/config"
+	"github.com/NickBrisebois/SpotifyDiscordBot-Go/internal/types"
 	"github.com/zmb3/spotify"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -22,7 +22,7 @@ type SongRecord struct {
 }
 
 // InitSpotify starts spotify API handler
-func InitSpotify(config *config.Config, spottyChan chan string, client *spotify.Client) (err error) {
+func InitSpotify(config *types.Config, spottyChan chan types.SpottyMessage, client *spotify.Client) (err error) {
 	var playlistID spotify.ID
 	playlistID = spotify.ID(config.SpotifyPlaylist)
 
@@ -34,7 +34,8 @@ func InitSpotify(config *config.Config, spottyChan chan string, client *spotify.
 
 	// We will loop every time we get some IDs or the exit command from the spotty channel
 	for {
-		songid := <-spottyChan
+		incomingMsg := <-spottyChan
+		songid := incomingMsg.ID
 
 		if songid == "quit" {
 			break
@@ -44,13 +45,22 @@ func InitSpotify(config *config.Config, spottyChan chan string, client *spotify.
 				_, err := client.AddTracksToPlaylist(playlistID, spotify.ID(songid))
 				if err != nil {
 					log.Println(err)
-					spottyChan <- "error"
+					response := types.SpottyMessage{
+						Err: err,
+					}
+					spottyChan <- response
 				} else {
 					songdb.addNewSong(songid)
-					spottyChan <- "I've added the song to the channel playlist!"
+					response := types.SpottyMessage{
+						Msg: "I've added the song to the channel playlist!",
+					}
+					spottyChan <- response
 				}
 			} else {
-				spottyChan <- "I can't add this song as it is already in the playlist according to my database."
+				response := types.SpottyMessage{
+					Msg: "I can't add this song as it is already in the playlist according to my database.",
+				}
+				spottyChan <- response
 			}
 		}
 	}
@@ -58,14 +68,14 @@ func InitSpotify(config *config.Config, spottyChan chan string, client *spotify.
 	return nil
 }
 
-func newDatabase(config *config.Config) *database {
+func newDatabase(config *types.Config) *database {
 	db := &database{}
 	db.init(config)
 	db.setCollection(config)
 	return db
 }
 
-func (db *database) init(config *config.Config) {
+func (db *database) init(config *types.Config) {
 	// Create a mongodb client
 	client, err := mongo.NewClient(options.Client().ApplyURI(config.MongoURI))
 	if err != nil {
@@ -94,7 +104,7 @@ func (db *database) init(config *config.Config) {
 	db.client = client
 }
 
-func (db *database) setCollection(config *config.Config) {
+func (db *database) setCollection(config *types.Config) {
 	db.collection = db.client.Database(config.MongoDatabase).Collection(config.MongoCollection)
 }
 
