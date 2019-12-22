@@ -16,56 +16,82 @@ type database struct {
 	collection *mongo.Collection
 }
 
-// SongRecord is what is saved to mongodb to keep track of what songs have been added
-type SongRecord struct {
-	ID string
+// SpotifyHandler handles spotify interactiosn
+type SpotifyHandler struct {
+	db           *database
+	config       *types.Config
+	playlistID   spotify.ID
+	spottyClient *spotify.Client
+	spottyChan   chan types.SpottyMessage
 }
 
-// InitSpotify starts spotify API handler
-func InitSpotify(config *types.Config, spottyChan chan types.SpottyMessage, client *spotify.Client) (err error) {
-	var playlistID spotify.ID
-	playlistID = spotify.ID(config.SpotifyPlaylist)
+// SongRecord is what is saved to mongodb to keep track of what songs have been added
+type SongRecord struct {
+	ID      string
+	AddedBy string
+}
 
-	if err != nil {
-		log.Fatalf("couldn't get features playlists:%v", err)
+// NewSpotifyHandler creates a new spotify handler
+func NewSpotifyHandler(config *types.Config, spottyChan chan types.SpottyMessage, client *spotify.Client) *SpotifyHandler {
+	spotifyHandler := &SpotifyHandler{
+		db:           newDatabase(config),
+		config:       config,
+		spottyClient: client,
+		playlistID:   spotify.ID(config.SpotifyPlaylist),
+		spottyChan:   spottyChan,
 	}
 
-	songdb := newDatabase(config)
+	return spotifyHandler
+}
 
+// SpottyLoop is the main loop handling all spotify interactions
+func (sh *SpotifyHandler) SpottyLoop() {
 	// We will loop every time we get some IDs or the exit command from the spotty channel
 	for {
-		incomingMsg := <-spottyChan
-		songid := incomingMsg.ID
+		incomingMsg := <-sh.spottyChan
 
-		if songid == "quit" {
+		switch incomingMsg.Kind {
+		case types.AddedBy:
+			songid := incomingMsg.ID
+			addedBy, err := sh.db.getAddedBy(songid)
+			response := types.SpottyMessage{
+				Kind: types.AddedBy,
+				User: addedBy,
+				Err:  err,
+			}
+			sh.spottyChan <- response
 			break
-		} else {
-			if songdb.isUnique(songid) {
+		case types.Track:
+			songid := incomingMsg.ID
+			user := incomingMsg.User
+
+			if sh.db.isUnique(songid) {
 				log.Println("Adding song to playlist")
-				_, err := client.AddTracksToPlaylist(playlistID, spotify.ID(songid))
+				_, err := sh.spottyClient.AddTracksToPlaylist(sh.playlistID, spotify.ID(songid))
 				if err != nil {
 					log.Println(err)
 					response := types.SpottyMessage{
 						Err: err,
 					}
-					spottyChan <- response
+					sh.spottyChan <- response
 				} else {
-					songdb.addNewSong(songid)
+					sh.db.addNewSong(songid, user)
 					response := types.SpottyMessage{
 						Msg: "I've added the song to the channel playlist!",
+						Err: nil,
 					}
-					spottyChan <- response
+					sh.spottyChan <- response
 				}
 			} else {
 				response := types.SpottyMessage{
 					Msg: "I can't add this song as it is already in the playlist according to my database.",
+					Err: nil,
 				}
-				spottyChan <- response
+				sh.spottyChan <- response
 			}
+			break
 		}
 	}
-
-	return nil
 }
 
 func newDatabase(config *types.Config) *database {
@@ -108,12 +134,12 @@ func (db *database) setCollection(config *types.Config) {
 	db.collection = db.client.Database(config.MongoDatabase).Collection(config.MongoCollection)
 }
 
-func (db *database) addNewSong(songid string) {
+func (db *database) addNewSong(songid string, user string) {
 	// Use context that times out after 10 seconds trying to connect to mongodb
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	newSong := SongRecord{ID: string(songid)}
+	newSong := SongRecord{ID: songid, AddedBy: user}
 	_, err := db.collection.InsertOne(ctx, newSong)
 
 	if err != nil {
@@ -143,5 +169,25 @@ func (db *database) isUnique(songid string) bool {
 	log.Println("Song already exists in database")
 
 	return false
+}
 
+func (db *database) getAddedBy(songid string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var result SongRecord
+	searchTerm := bson.D{{
+		Key:   "id",
+		Value: songid,
+	}}
+	err := db.collection.FindOne(ctx, searchTerm).Decode(&result)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return "This song hasn't been added", nil
+		}
+		return "", err
+	}
+
+	return result.AddedBy, nil
 }
