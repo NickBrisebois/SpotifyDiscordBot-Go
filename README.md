@@ -1,7 +1,7 @@
 ### How to build
 Download the repo with go get:
 
-    go get NickBrisebois/SpotifyDiscordBot-Go
+    go get github.com/NickBrisebois/SpotifyDiscordBot-Go
 
 cd into the folder:
 
